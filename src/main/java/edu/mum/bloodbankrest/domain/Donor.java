@@ -35,6 +35,8 @@ public class Donor{
 	private String email;
 	private String phoneNumber;
 	private String medicalHistory;
+	@OneToOne
+	private BloodType bloodType;
 
 	@OneToOne(fetch=FetchType.EAGER)
 	@JoinColumn(name="donorId")
@@ -50,7 +52,7 @@ public class Donor{
 	public Donor() {}
 
 	public Donor(String firstName, String lastName, int age, double weight, String email, String phoneNumber,
-			String medicalHistory) {
+				 String medicalHistory) {
 		this.firstName = firstName;
 		this.lastName = lastName;
 		this.age = age;
@@ -63,5 +65,37 @@ public class Donor{
 	public void addDonation(Donation donation) {
 		this.donations.add(donation);
 		donation.setDonor(this);
+	}
+
+	public BloodType getBloodType() {
+		return bloodType;
+	}
+
+	public void setBloodType(BloodType bloodType) {
+		this.bloodType = bloodType;
+	}
+
+	public String getFirstName() {
+		return firstName;
+	}
+
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
+	}
+
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
 	}
 }

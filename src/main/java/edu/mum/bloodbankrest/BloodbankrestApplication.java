@@ -1,7 +1,10 @@
 package edu.mum.bloodbankrest;
 
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.xml.internal.bind.v2.runtime.unmarshaller.Receiver;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
@@ -19,39 +22,43 @@ import org.springframework.amqp.rabbit.listener.adapter.MessageListenerAdapter;
 
 @SpringBootApplication
 public class BloodbankrestApplication {
-    static final String topicExchangeName = "spring-boot-exchange";
-
-    static final String queueName = "spring-boot";
+    public static final String EXCHANGE_NAME = "tips_tx";
+    public static final String DEFAULT_PARSING_QUEUE = "default_parser_q";
+    public static final String MESSAGING_QUEUE = "Message_Queue";
+    public static final String ROUTING_KEY = "tips";
 
     @Bean
-    Queue queue() {
-        return new Queue(queueName, false);
+    public TopicExchange tipsExchange() {
+        return new TopicExchange(EXCHANGE_NAME);
     }
 
     @Bean
-    TopicExchange exchange() {
-        return new TopicExchange(topicExchangeName);
+    public Queue defaultParsingQueue() {
+        return new Queue(DEFAULT_PARSING_QUEUE);
+    }
+    @Bean
+    public Queue messageParsingQueue() {
+        return new Queue(MESSAGING_QUEUE);
     }
 
     @Bean
-    Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with("foo.bar.#");
+    public Binding queueToExchangeBinding() {
+        return BindingBuilder.bind(defaultParsingQueue()).to(tipsExchange()).with(ROUTING_KEY);
     }
 
-//    @Bean
-//    SimpleMessageListenerContainer container(ConnectionFactory connectionFactory,
-//                                             MessageListenerAdapter listenerAdapter) {
-//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-//        container.setConnectionFactory(connectionFactory);
-//        container.setQueueNames(queueName);
-//        container.setMessageListener(listenerAdapter);
-//        return container;
-//    }
 
-//    @Bean
-//    MessageListenerAdapter listenerAdapter(Receiver receiver) {
-//        return new MessageListenerAdapter(receiver, "receiveMessage");
-//    }
+    @Bean
+    public Jackson2JsonMessageConverter messageConverter() {
+        ObjectMapper mapper = new ObjectMapper();
+        return new Jackson2JsonMessageConverter(mapper);
+    }
+
+    @Bean
+    public RabbitTemplate rabbitTemplate(final ConnectionFactory connectionFactory) {
+        RabbitTemplate rabbitTemplate = new RabbitTemplate(connectionFactory);
+        rabbitTemplate.setMessageConverter(messageConverter());
+        return rabbitTemplate;
+    }
     public static void main(String[] args) {
         SpringApplication.run(BloodbankrestApplication.class, args);
     }
